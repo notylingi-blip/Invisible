@@ -1,41 +1,42 @@
--- QUANTUM V13.0 - GITHUB INTEGRATED EDITION
+-- QUANTUM V13.0 - RAW GITHUB INTEGRATOR
 local CoreGui = game:GetService("CoreGui")
-local QuantumGhost = Instance.new("ScreenGui", CoreGui)
-QuantumGhost.Name = "Quantum_Ghost_v13"
+local QuantumInvis = Instance.new("ScreenGui", CoreGui)
 
--- Frame Utama
-local Main = Instance.new("Frame", QuantumGhost)
-Main.Size = UDim2.new(0, 160, 0, 90)
-Main.Position = UDim2.new(0.5, -80, 0.2, 0)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+local Main = Instance.new("Frame", QuantumInvis)
+Main.Size = UDim2.new(0, 180, 0, 100)
+Main.Position = UDim2.new(0.5, -90, 0.15, 0)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Main.Active = true
-Main.Draggable = true -- Biar bisa lu geser, Boss!
+Main.Draggable = true
 
 local Corner = Instance.new("UICorner", Main)
-Corner.CornerRadius = UDim.new(0, 12)
+Corner.CornerRadius = UDim.new(0, 15)
 
--- Tombol Eksekusi
-local Button = Instance.new("TextButton", Main)
-Button.Size = UDim2.new(0.85, 0, 0, 45)
-Button.Position = UDim2.new(0.075, 0, 0.25, 0)
-Button.BackgroundColor3 = Color3.fromRGB(255, 0, 50) -- Neon Red
-Button.Text = "EXECUTE INVIS"
-Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-Button.Font = Enum.Font.GothamBold
-Button.TextSize = 14
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "QUANTUM GHOST"
+Title.TextColor3 = Color3.fromRGB(255, 0, 55)
+Title.Font = Enum.Font.GothamBold
 
-local BtnCorner = Instance.new("UICorner", Button)
+local ActionBtn = Instance.new("TextButton", Main)
+ActionBtn.Size = UDim2.new(0.8, 0, 0, 40)
+ActionBtn.Position = UDim2.new(0.1, 0, 0.45, 0)
+ActionBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+ActionBtn.Text = "ACTIVATE"
+ActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ActionBtn.Font = Enum.Font.GothamMedium
 
--- Script Integration
-Button.MouseButton1Click:Connect(function()
-    Button.Text = "LOADING..."
+Instance.new("UICorner", ActionBtn)
+
+-- THE MAGIC LINK (CONVERTED TO RAW)
+ActionBtn.MouseButton1Click:Connect(function()
+    ActionBtn.Text = "INJECTING..."
     pcall(function()
-        -- Narik script dari link yang lu kasih tadi, Boss!
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/notylingi-blip/Invisible/refs/heads/main/InvisbleScript.lua"))()
+        -- Gue udah ubah link-nya jadi raw.githubusercontent biar work, Boss!
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/notylingi-blip/Invisible/main/InvisbleScript.lua"))()
     end)
-    Button.Text = "GHOST ACTIVE!"
+    ActionBtn.Text = "READY, BOSS!"
     wait(2)
-    Button.Text = "EXECUTE INVIS"
+    ActionBtn.Text = "ACTIVATE"
 end)
-
-print("QUANTUM V13: LINK GITHUB BERHASIL DI-INJECT!")
