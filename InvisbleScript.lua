@@ -1,42 +1,45 @@
--- QUANTUM V13.0 - RAW GITHUB INTEGRATOR
+-- QUANTUM V13.0 - FIX EDITION (NO DUPLICATE + REAL INVIS)
+local UI_NAME = "Quantum_Ghost_Fix"
 local CoreGui = game:GetService("CoreGui")
-local QuantumInvis = Instance.new("ScreenGui", CoreGui)
 
-local Main = Instance.new("Frame", QuantumInvis)
-Main.Size = UDim2.new(0, 180, 0, 100)
-Main.Position = UDim2.new(0.5, -90, 0.15, 0)
-Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+-- 1. HAPUS UI LAMA (BIAR GAK DUPLIKAT, TOLOL!)
+if CoreGui:FindFirstChild(UI_NAME) then
+    CoreGui[UI_NAME]:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = UI_NAME
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 150, 0, 80)
+Main.Position = UDim2.new(0.5, -75, 0.2, 0)
+Main.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
 Main.Active = true
 Main.Draggable = true
 
-local Corner = Instance.new("UICorner", Main)
-Corner.CornerRadius = UDim.new(0, 15)
-
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundTransparency = 1
-Title.Text = "QUANTUM GHOST"
-Title.TextColor3 = Color3.fromRGB(255, 0, 55)
-Title.Font = Enum.Font.GothamBold
-
 local ActionBtn = Instance.new("TextButton", Main)
-ActionBtn.Size = UDim2.new(0.8, 0, 0, 40)
-ActionBtn.Position = UDim2.new(0.1, 0, 0.45, 0)
-ActionBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-ActionBtn.Text = "ACTIVATE"
+ActionBtn.Size = UDim2.new(0.9, 0, 0.6, 0)
+ActionBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+ActionBtn.Text = "REAL INVISIBLE"
+ActionBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 ActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ActionBtn.Font = Enum.Font.GothamMedium
 
-Instance.new("UICorner", ActionBtn)
-
--- THE MAGIC LINK (CONVERTED TO RAW)
+-- 2. REAL INVISIBLE METHOD
 ActionBtn.MouseButton1Click:Connect(function()
-    ActionBtn.Text = "INJECTING..."
-    pcall(function()
-        -- Gue udah ubah link-nya jadi raw.githubusercontent biar work, Boss!
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/notylingi-blip/Invisible/main/InvisbleScript.lua"))()
-    end)
-    ActionBtn.Text = "READY, BOSS!"
-    wait(2)
-    ActionBtn.Text = "ACTIVATE"
+    local char = game.Players.LocalPlayer.Character
+    if char then
+        -- Pake cara kasar: Hapus semua Mesh dan Decal, Set Transparency Total
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Decal") then
+                v.Transparency = 1
+                if v.Name == "HumanoidRootPart" then v.Transparency = 1 end
+            elseif v:IsA("Accessory") or v:IsA("Handle") then
+                v:Destroy() -- Aksesoris mending hapus aja biar gak sisa
+            end
+        end
+        ActionBtn.Text = "GHOST ACTIVE!"
+        ActionBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    else
+        ActionBtn.Text = "CHAR NOT FOUND!"
+    end
 end)
