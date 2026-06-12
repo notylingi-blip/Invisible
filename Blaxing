@@ -39,7 +39,7 @@ centerLine.BackgroundColor3=Color3.fromRGB(80,140,255); centerLine.BorderSizePix
 local introTitle=Instance.new("TextLabel",introBG)
 introTitle.Size=UDim2.new(0,300,0,60); introTitle.Position=UDim2.new(0.5,0,0.5,-30)
 introTitle.AnchorPoint=Vector2.new(0.5,0.5)
-introTitle.BackgroundTransparency=1; introTitle.Text="ForReal Hub"
+introTitle.BackgroundTransparency=1; introTitle.Text="Blaxing Hub"
 introTitle.TextColor3=Color3.fromRGB(40,90,220); introTitle.TextTransparency=1
 introTitle.Font=Enum.Font.GothamBold; introTitle.TextSize=48
 introTitle.TextXAlignment=Enum.TextXAlignment.Center; introTitle.ZIndex=13
@@ -469,86 +469,87 @@ local function _activateAntiDie()
     end))
 end
 
+-- Ganti startBatAimbot di ForReal Hub dengan ini:
 local function startBatAimbot()
     if Conns.aimbot then Conns.aimbot:Disconnect(); Conns.aimbot = nil end
-    _activateAntiDie()
 
     local hum0 = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if hum0 then hum0.AutoRotate = false end
 
     Conns.aimbot = RunService.RenderStepped:Connect(function()
         if not State.batAimbotToggled then return end
-        local char = LP.Character; if not char or not char.Parent then return end
-        local myHRP = char:FindFirstChild("HumanoidRootPart"); if not myHRP then return end
-        local myH = char:FindFirstChildOfClass("Humanoid"); if not myH or myH.Health <= 0 then return end
+        local char = LP.Character; if not char then return end
+        local root = char:FindFirstChild("HumanoidRootPart"); if not root then return end
+        local hum = char:FindFirstChildOfClass("Humanoid"); if not hum then return end
 
-        myH.AutoRotate = false
-
-        local bat = getBat()
-        if bat and bat.Parent ~= char then
-            pcall(function() myH:EquipTool(bat) end)
+        -- Auto equip bat kalau belum pegang tool
+        if not char:FindFirstChildOfClass("Tool") then
+            local bat = getBat()
+            if bat then pcall(function() hum:EquipTool(bat) end) end
         end
 
-        local tHRP, tChar = _aimbotGetTarget(myHRP)
-        if tHRP and tChar and tHRP.Parent and tChar.Parent then
-            aimbotNoTargetSince = nil
-
-            local targetVel = tHRP.AssemblyLinearVelocity
-            local myPos = myHRP.Position
-            local targetPos = tHRP.Position
-
-            -- Predict posisi target
-            local predictPos = targetPos + targetVel * 0.14
-            predictPos = predictPos + tHRP.CFrame.LookVector * 0.3
-
-            local direction = predictPos - myPos
-            local flatDir = Vector3.new(direction.X, 0, direction.Z).Unit
-            local chaseSpeed = State.aimbotSpeed
-
-            -- Height targeting
-            local desiredHeight = targetPos.Y + 3.7
-            local yVel = (desiredHeight - myPos.Y) * 19.5 + targetVel.Y * 0.8
-            if myH.FloorMaterial ~= Enum.Material.Air then
-                yVel = math.max(yVel, 13)
+        -- Cari target terdekat
+        local target = nil
+        local minDist = math.huge
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then
+                local tRoot = p.Character:FindFirstChild("HumanoidRootPart")
+                local tHum = p.Character:FindFirstChildOfClass("Humanoid")
+                if tRoot and tHum and tHum.Health > 0 then
+                    local dist = (tRoot.Position - root.Position).Magnitude
+                    if dist < minDist then minDist = dist; target = tRoot end
+                end
             end
-            yVel = math.clamp(yVel, -70, 110)
+        end
 
-            local desiredVel = Vector3.new(flatDir.X * chaseSpeed, yVel, flatDir.Z * chaseSpeed)
-            myHRP.AssemblyLinearVelocity = myHRP.AssemblyLinearVelocity:Lerp(desiredVel, 0.8)
+        if not target then return end
 
-            -- Tilt/rotate toward target
-            local predictTime = math.clamp(targetVel.Magnitude / 150, 0.05, 0.2)
-            local predictedPos = targetPos + targetVel * predictTime
-            local toPredict = predictedPos - myPos
-            if toPredict.Magnitude > 0.1 then
-                local goalCF = CFrame.lookAt(myPos, predictedPos)
-                local curCF = myHRP.CFrame
-                local diffCF = curCF:Inverse() * goalCF
-                local rx, ry, rz = diffCF:ToEulerAnglesXYZ()
-                rx = math.clamp(rx, -2.5, 2.5)
-                ry = math.clamp(ry, -2.5, 2.5)
-                rz = math.clamp(rz, -2.5, 2.5)
-                local tiltSpeed = 42
-                myHRP.AssemblyAngularVelocity = myHRP.CFrame:VectorToWorldSpace(
-                    Vector3.new(rx * tiltSpeed, ry * tiltSpeed, rz * tiltSpeed)
-                )
-            end
+        local targetVel = target.AssemblyLinearVelocity
+        local myPos = root.Position
+        local targetPos = target.Position
 
-            -- Hit kalau sudah dekat
-            local currentTool = nil
-            for _, t in ipairs(char:GetChildren()) do
-                if t:IsA("Tool") then currentTool = t; break end
-            end
-            if currentTool == bat and (targetPos - myPos).Magnitude <= VYSE_HIT_DIST then
-                tryHitBat()
-            end
-        else
-            if not aimbotNoTargetSince then aimbotNoTargetSince = tick() end
-            if tick() - aimbotNoTargetSince > 1.5 then
-                aimbotLockedTarget = nil
-                myHRP.AssemblyLinearVelocity = Vector3.zero
-                myHRP.AssemblyAngularVelocity = Vector3.zero
-            end
+        -- Predict posisi target
+        local predictPos = targetPos + targetVel * 0.14
+        predictPos = predictPos + target.CFrame.LookVector * 0.3
+
+        local direction = predictPos - myPos
+        local flatDir = Vector3.new(direction.X, 0, direction.Z).Unit
+        local chaseSpeed = State.aimbotSpeed or 58
+
+        -- Hitung Y velocity buat naik ke target
+        local desiredHeight = targetPos.Y + 3.7
+        local yVel = (desiredHeight - myPos.Y) * 19.5 + targetVel.Y * 0.8
+        if hum.FloorMaterial ~= Enum.Material.Air then
+            yVel = math.max(yVel, 13)
+        end
+        yVel = math.clamp(yVel, -70, 110)
+
+        local desiredVel = Vector3.new(flatDir.X * chaseSpeed, yVel, flatDir.Z * chaseSpeed)
+        root.AssemblyLinearVelocity = root.AssemblyLinearVelocity:Lerp(desiredVel, 0.8)
+
+        -- Tilt ke arah predicted position (3D including Y)
+        local speed3 = targetVel.Magnitude
+        local predictTime = math.clamp(speed3 / 150, 0.05, 0.2)
+        local predictedPos = targetPos + targetVel * predictTime
+        local toPredict = predictedPos - myPos
+
+        if toPredict.Magnitude > 0.1 then
+            local goalCF = CFrame.lookAt(myPos, predictedPos)
+            local curCF = root.CFrame
+            local diffCF = curCF:Inverse() * goalCF
+            local rx, ry, rz = diffCF:ToEulerAnglesXYZ()
+            rx = math.clamp(rx, -2.5, 2.5)
+            ry = math.clamp(ry, -2.5, 2.5)
+            rz = math.clamp(rz, -2.5, 2.5)
+            local tiltSpeed = 42
+            root.AssemblyAngularVelocity = root.CFrame:VectorToWorldSpace(
+                Vector3.new(rx * tiltSpeed, ry * tiltSpeed, rz * tiltSpeed)
+            )
+        end
+
+        -- Hit kalau sudah dekat
+        if minDist <= VYSE_HIT_DIST then
+            tryHitBat()
         end
     end)
 end
@@ -1212,7 +1213,7 @@ function createToggleUI()
     -- Toggle button (kecil di pojok)
     local toggleBtn=Instance.new("TextButton"); toggleBtn.Size=UDim2.new(0,110,0,28); toggleBtn.Position=UDim2.new(0,10,0,44)
     toggleBtn.BackgroundColor3=C.header; toggleBtn.TextColor3=Color3.fromRGB(255,255,255)
-    toggleBtn.Text="ForReal Hub"; toggleBtn.TextSize=12; toggleBtn.Font=FONT_BOLD
+    toggleBtn.Text="Blaxing Hub"; toggleBtn.TextSize=12; toggleBtn.Font=FONT_BOLD
     toggleBtn.BorderSizePixel=0; toggleBtn.ZIndex=5; toggleBtn.Parent=mainGui
     Instance.new("UICorner",toggleBtn).CornerRadius=UDim.new(0,8)
 
@@ -1258,7 +1259,7 @@ function createToggleUI()
     headerFix.BackgroundColor3=C.header; headerFix.BorderSizePixel=0; headerFix.ZIndex=6
 
     local headerLbl=Instance.new("TextLabel",header); headerLbl.Size=UDim2.new(1,-40,1,0); headerLbl.Position=UDim2.new(0,12,0,0)
-    headerLbl.BackgroundTransparency=1; headerLbl.Text="ForReal Hub"
+    headerLbl.BackgroundTransparency=1; headerLbl.Text="Blaxing Hub"
     headerLbl.TextColor3=Color3.fromRGB(255,255,255); headerLbl.TextSize=14; headerLbl.Font=FONT_TITLE
     headerLbl.TextXAlignment=Enum.TextXAlignment.Left; headerLbl.ZIndex=7
 
